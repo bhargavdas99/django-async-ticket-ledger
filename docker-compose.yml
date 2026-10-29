@@ -1,0 +1,30 @@
+services:
+  redis:
+    image: redis:alpine
+    container_name: ticket_redis
+    ports:
+      - "6379:6379"
+
+  web:
+    build: .
+    container_name: django_ticket_api
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+
+  celery_worker:
+    build: .
+    container_name: celery_ticket_worker
+    command: celery -A config worker --pool=solo --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
